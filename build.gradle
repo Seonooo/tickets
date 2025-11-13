@@ -34,10 +34,35 @@ dependencies {
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
+    // --- Testing Dependencies ---
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Cucumber (버전 통일)
+    def cucumberVersion = '7.20.1'
+    testImplementation "io.cucumber:cucumber-java:${cucumberVersion}"
+    testImplementation "io.cucumber:cucumber-spring:${cucumberVersion}"
+    testImplementation "io.cucumber:cucumber-junit-platform-engine:${cucumberVersion}"
+
+    // 💡 JUnit Platform Suite 추가 (TestRunner 실행을 위함)
+    testImplementation 'org.junit.platform:junit-platform-suite'
+
+    // Testcontainers with Spring Boot 3.2+ integration
+    testImplementation "org.junit.jupiter:junit-jupiter:5.8.1"
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter' // JUnit 5 통합
+
+    // Testcontainers Modules
+    testImplementation 'org.testcontainers:mysql'
+    testImplementation 'org.testcontainers:kafka'
+
+    // 💡 Redis는 Generic/Core 모듈로 대체 (이전 오류 해결)
+    testImplementation 'org.testcontainers:testcontainers'
+
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+test {
+    useJUnitPlatform{
+        includeEngines 'junit-vintage'
+    }
 }
