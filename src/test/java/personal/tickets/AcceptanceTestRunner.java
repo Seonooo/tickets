@@ -7,7 +7,7 @@ import org.junit.platform.suite.api.Suite;
 
 @Suite
 @IncludeEngines("cucumber")
-@SelectClasspathResource("personal/tickets/features") // feature 파일 경로
+@SelectClasspathResource("features") // feature 파일 경로
 @ConfigurationParameter(
         key = "cucumber.glue",
         value = "personal.tickets.steps, personal.tickets.config" // Step Definition 및 Configuration 경로
