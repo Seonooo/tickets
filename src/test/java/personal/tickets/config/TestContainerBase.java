@@ -6,8 +6,8 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistrar;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.MySQLContainer;
@@ -15,6 +15,7 @@ import org.testcontainers.utility.DockerImageName;
 
 @CucumberContextConfiguration
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
 public class TestContainerBase {
 
     @LocalServerPort
@@ -39,27 +40,22 @@ public class TestContainerBase {
         @ServiceConnection(name = "redis")
         // Host와 Port를 자동으로 설정
         GenericContainer<?> redisContainer() {
-            return new GenericContainer<>(DockerImageName.parse("redis:6.2.6"))
+            return new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
                     .withExposedPorts(6379);
         }
 
-        // 3. Kafka 컨테이너 (수동 설정 필요)
-        static final KafkaContainer KAFKA_CONTAINER = new KafkaContainer(
-                DockerImageName.parse("confluentinc/cp-kafka:7.4.0")
-        );
-
-        // 정적 블록에서 Kafka 컨테이너를 시작 (JUnit 라이프사이클 밖에서 관리)
-        static {
-            KAFKA_CONTAINER.start();
+        // 3. Kafka 컨테이너
+        @Bean(initMethod = "start", destroyMethod = "stop")
+        KafkaContainer kafkaContainer() { // 파라미터에서 DynamicPropertyRegistry 제거!
+            return new KafkaContainer(
+                    DockerImageName.parse("confluentinc/cp-kafka:7.5.0")
+            );
         }
 
-        /**
-         * Kafka의 브로커 주소를 Spring Boot 설정에 동적으로 주입합니다.
-         */
-        @DynamicPropertySource
-        static void kafkaProperties(DynamicPropertyRegistry registry) {
-            // Spring Boot의 'spring.kafka.bootstrap-servers' 설정 오버라이드
-            registry.add("spring.kafka.bootstrap-servers", KAFKA_CONTAINER::getBootstrapServers);
+        // 4. DynamicPropertyRegistrar Bean 추가 (새로운 방식)
+        @Bean
+        public DynamicPropertyRegistrar kafkaPropertiesRegistrar(KafkaContainer kafkaContainer) {
+            return registry -> registry.add("spring.kafka.bootstrap-servers", kafkaContainer::getBootstrapServers);
         }
     }
 }
