@@ -10,6 +10,9 @@ jobs:
   test:
     #최신 우분투 사용 (docker 포함)
     runs-on: ubuntu-latest
+    permissions: #토큰의 권한을 설정합니다.
+      checks: write #Check Run API에 접근할 수 있는 권한을 부여
+      contents: read
 
     steps:
     # 저장소의 코드 Runner 환경에 내려 받음
