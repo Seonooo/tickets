@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    #최신 우분투 사용 (docker 포함)
+    runs-on: ubuntu-latest
+
+    steps:
+    # 저장소의 코드 Runner 환경에 내려 받음
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # JAVA21 temurin 셋팅
+    - name: Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+        # gradle 캐시로 빠른 다운로드
+        cache: 'gradle'
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Run tests with Gradle
+      #gradle test 실행
+      run: ./gradlew test
+
+    - name: Publish test results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      # 테스트 실패 시에도 결과 게시가 필요하다 생각해 추가
+      if: always()
+      with:
+        files: |
+          build/test-results/test/*.xml
